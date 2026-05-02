@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.ipynb_checkpoints/
+*.egg-info/
+build/
+dist/
+
+# Data (too large or licensed — do not commit)
+data/raw/
+data/transcripts_us/
+data/clean/transcripts_us/
+data/embeddings/
+data/signals/*
+earningcall/
+
+# Models
+models/*.pkl
+models/*.joblib
+!models/event_study_best.pkl
+
+# Whitelisted: NB02 LLM artifacts (expensive OpenAI calls, core research output)
+!data/signals/llm_signals.parquet
+!data/signals/evidence.parquet
+
+# Output
+output/figures/*.png
+output/figures/*.pdf
+output/tables/*.csv
+
+# API keys
+.env
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# pytest / mypy
+.pytest_cache/
+.mypy_cache/
+
+# Local-only: course reference materials (kept locally, not shared)
+reference/
