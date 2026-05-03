@@ -150,11 +150,9 @@ llm-portfolio/
 
 ```bash
 pip install -e .                  # editable install, pulls OpenAI + Anthropic SDKs
-pip install -e ".[dev]"           # adds jupyter + ruff
 cp .env.example .env              # fill OPENAI_API_KEY
 jupyter lab notebooks/            # run 03 → 05 to reproduce backtest end-to-end
 python config.py                  # sanity-check paths + ticker count
-ruff check .                      # lint (line-length 100, target py310)
 ```
 
 `data/clean/*.parquet`, `data/signals/llm_signals.parquet`, and `models/event_study_best.pkl` are committed, so **NB03 → NB05 reproduces from scratch in ~3 minutes without any API spend**. Re-running NB00 needs WRDS access; re-running NB02 needs an OpenAI key and ~$30–50 of API budget for the full 1,500-transcript pass.
@@ -178,7 +176,7 @@ ruff check .                      # lint (line-length 100, target py310)
 - **Anti-leakage**: scaler / winsorisation / sector-dummy alignment all fit on train only; RAG retrieval filters by strict `before_date <`; technicals computed with `< event_date` not `≤`
 - **Significance stack**: report Newey–West HAC (lag=5) on daily PnL, Memmel (1996) ΔSharpe z, circular block bootstrap (block_len=10, 5000 reps), event-level Spearman + Mann–Whitney as the power-friendlier alternative
 
-## Limitations (NB05 §13 — the honest version)
+## Limitations
 
 - **Sample size.** Two OOS years (~500 days, ~360 events) is genuinely short. The wide §8 ΔSharpe CI is a sample-size problem first; 5+ years of OOS would do more for the headline than any modelling change.
 - **Token / cost budget.** Each full GPT-4o pass costs ~$30–50, which capped how many prompt variants could be tried. One clean end-to-end pipeline was prioritised over wider iteration.
