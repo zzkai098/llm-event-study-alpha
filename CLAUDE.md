@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Research pipeline that combines **OpenAI GPT-4o + RAG** for active portfolio management on 50 US large-cap equities (2018–2025, ~1,500 WRDS earnings call transcripts). Workflow lives in six sequential notebooks (`notebooks/00`–`05`) plus four interpretation notebooks (`notebooks/06`–`09`); shared logic lives in `src/llm_agent/`.
+Research pipeline that combines **OpenAI GPT-4o + RAG** for active portfolio management on 50 US large-cap equities (2018–2025, ~1,500 WRDS earnings call transcripts). Workflow lives in six sequential notebooks (`notebooks/00`–`05`); shared logic lives in `src/llm_agent/`. NB05 self-contains the analyses formerly split across NB06–NB09 (event-level rank tests in §9, permutation importance in §10, block + drop-one ablation in §11, conclusion in §12, limitations in §13).
 
 ## Commands
 
@@ -13,12 +13,12 @@ pip install -e .                  # install (editable); also installs ANTHROPIC 
 pip install -e ".[dev]"           # adds jupyter + ruff
 cp .env.example .env              # then fill OPENAI_API_KEY
 
-jupyter lab notebooks/            # run 00 → 05 in order; 06–09 are independent
+jupyter lab notebooks/            # run 00 → 05 in order
 python config.py                  # sanity-check paths and ticker count
 ruff check .                      # lint (line-length 100, target py310)
 ```
 
-There is no test suite; validation is via the notebooks (NB1 EDA, NB5 backtest metrics, NB6 importance audit, NB7 event-level rank tests, NB8 model bake-off reproduction, NB9 feature ablations).
+There is no test suite; validation is via the notebooks (NB01 EDA, NB04 model bake-off + Optuna, NB05 backtest metrics + significance + permutation + ablation).
 
 ## Architecture
 
@@ -34,23 +34,16 @@ earningcall/*.zip  ──NB0──▶  data/clean/{earnings_sessions,earnings_se
                               │         → data/clean/car_labels.parquet
                               ├──NB4── 4-model bake-off + Optuna RF tuning
                               │         → models/event_study_best.pkl
-                              ├──NB5── three-arm ablation backtest (BuyHold_EW50 / Tech / LLM+Tech)
-                              ├──NB6── permutation importance audit on NB4's RF
-                              │         → output/tables/perm_importance_*.csv
-                              ├──NB7── event-level Spearman + Mann-Whitney rank tests
-                              │         → output/tables/event_tests_*.csv
-                              ├──NB8── 4-model bake-off reproduction (verifies pkl end-to-end)
-                              │         → output/tables/bakeoff_summary.csv
-                              └──NB9── feature ablations (block-level + drop-one LLM)
-                                        → output/tables/{block,drop_one_llm}_ablation.csv
+                              └──NB5── three-arm ablation backtest (BuyHold_EW50 / Tech / LLM+Tech)
+                                        §6  headline Sharpe / DD / IR table
+                                        §8  Newey-West HAC + Memmel ΔSharpe + block bootstrap
+                                        §9  event-level Spearman + Mann-Whitney (Appendix E.4)
+                                        §10 OOS permutation importance (Appendix D.3)
+                                        §11 block ablation + drop-one LLM (Appendix D.1, D.2)
+                                        §12 conclusion · §13 limitations
 ```
 
-NB6–NB9 are independent audit notebooks that consume `models/event_study_best.pkl` plus `data/clean/`; none of them write back to `data/` or `models/`. Each maps to one paper appendix:
-
-- NB6 → Appendix D.3 (permutation importance)
-- NB7 → Appendix E.4 (event-level rank tests)
-- NB8 → Appendix C   (model selection: bake-off + Optuna verification)
-- NB9 → Appendix D.1, D.2 (block ablation, drop-one LLM ablation)
+NB04 maps to Appendix C (model selection: bake-off + Optuna). All other appendix-level analyses live as numbered sections inside NB05.
 
 **`src/llm_agent/` is the stable contract** between teammates — both notebooks import from it; do not duplicate path or split logic in notebooks:
 
@@ -60,10 +53,10 @@ NB6–NB9 are independent audit notebooks that consume `models/event_study_best.
 - `features.py` — per-event feature matrix for the three ablation arms (A/B/C). Anti-leakage is enforced at the function level (`_technicals_at_event` uses `<` not `<=` on event_date).
 - `models.py` — sklearn pipeline factory for the NB4 bake-off (logreg / SVM / RF / XGB). Uses `TimeSeriesSplit`, never plain `KFold`.
 - `metrics.py` — Sharpe / annualised return / MDD / IR / AUC.
-- `importance.py` — permutation importance + block summary utilities used by NB6. Relies on `features.build_feature_matrix` as single source of truth — does not rebuild the matrix.
-- `event_tests.py` — event-level Spearman ρ and Mann-Whitney U used by NB7. Quintile thresholds are frozen on val 2023 to match NB5's trade rule; the default evaluation window is `CAR_2_21` (longer than the trained `car_2_11`, as a stricter PEAD check).
-- `bakeoff.py` — 4-model GridSearchCV comparison + per-family CV/val scoring used by NB8. Imports the model factory from `models.py` rather than redefining the grid.
-- `ablation.py` — block-level and drop-one feature ablations used by NB9. Refits RF with the pkl's Optuna-tuned hyperparameters on each feature subset, isolating the contribution of features (not hyperparameters).
+- `importance.py` — permutation importance + block summary utilities used by NB05 §10. Relies on `features.build_feature_matrix` as single source of truth — does not rebuild the matrix.
+- `event_tests.py` — event-level Spearman ρ and Mann-Whitney U used by NB05 §9. Quintile thresholds are frozen on val 2023 to match NB05's trade rule; the default evaluation window is `CAR_2_21` (longer than the trained `car_2_11`, as a stricter PEAD check).
+- `bakeoff.py` — 4-model GridSearchCV comparison + per-family CV/val scoring used by NB04. Imports the model factory from `models.py` rather than redefining the grid.
+- `ablation.py` — block-level and drop-one feature ablations used by NB05 §11. Refits RF with the pkl's Optuna-tuned hyperparameters on each feature subset, isolating the contribution of features (not hyperparameters).
 
 **`config.py` is the single source of truth** for paths, the 50-ticker universe (`TARGET_COMPANIES` with name-aliases for fuzzy matching, plus auto-built `NAME_TO_TICKER` reverse index), time splits, and model IDs. Always import from `config` rather than hard-coding.
 
@@ -90,4 +83,4 @@ NB6–NB9 are independent audit notebooks that consume `models/event_study_best.
 
 - `config.WRDS_ZIP_DIR` is hard-coded to a teammate's machine path (`/Users/yixuanwang/...`). Override locally before running NB0; everything downstream reads from `data/clean/` so it's only needed for the ETL re-run.
 - Python pinned to `>=3.10,<3.12` because Intel Mac caps `torch` at 2.2.2.
-- NB2 batch run costs ~\$30–50 in OpenAI spend for the full 1,500-transcript pass. `data/signals/llm_signals.parquet` and `data/signals/evidence.parquet` are committed so NB3–NB9 reproduce without rerunning NB2.
+- NB02 batch run costs ~\$30–50 in OpenAI spend for the full 1,500-transcript pass. `data/signals/llm_signals.parquet` and `data/signals/evidence.parquet` are committed so NB03–NB05 reproduce without rerunning NB02.
