@@ -2,6 +2,23 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Final Report Requirements (course deliverable)
+
+Deliverable is a consulting-style research report presented to the "client" company that hired the team.
+
+**Required sections (in order):**
+1. **Executive Summary** — goal + main findings in non-technical language.
+2. **Results & Discussion** — present results and discuss them.
+3. **Methodology** — describe methods used, compare alternatives, justify why the chosen method is preferred.
+4. **Contributions** — "who did what" paragraph. Equal contribution is required; everyone must write part of the code.
+5. **Code** — submitted as a separate file.
+
+**Page limit:** main document ≤ 6 pages. All detail goes in **Appendix** (no page limit). Segment the Appendix into clearly numbered sections and cross-reference them from the main document.
+
+**Grading focus:** writing quality, depth of results discussion, methodological rigor. For self-proposed projects, quality of proposal + preliminary results matter most.
+
+Style: succinct, concise, professional consulting tone (not academic).
+
 ## Project
 
 Research pipeline that combines **OpenAI GPT-4o + RAG** for active portfolio management on 50 US large-cap equities (2018–2025, ~1,500 WRDS earnings call transcripts). Workflow lives in six sequential notebooks (`notebooks/00`–`05`); shared logic lives in `src/llm_agent/`. NB05 self-contains the analyses formerly split across NB06–NB09 (event-level rank tests in §9, permutation importance in §10, block + drop-one ablation in §11, conclusion in §12, limitations in §13).

@@ -53,3 +53,13 @@ output/tables/*.csv
 
 # Local-only: course reference materials (kept locally, not shared)
 reference/
+
+# Claude Code local session state
+.claude/
+
+# Word lock files
+~$*.docx
+~$*.doc
+
+# Report scratch files (keep deliverables, drop backups)
+report/*.backup.docx
