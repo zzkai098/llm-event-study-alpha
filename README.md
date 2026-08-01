@@ -51,7 +51,7 @@ Output a single JSON object — no prose, no markdown fences.
 
 ## TL;DR — what the data actually shows
 
-Six layers of evidence, ranked from weakest to strongest claim:
+**The defensible finding: a single GPT-4o signal — management evasiveness on Q&A — carries a *statistically significant* cross-sectional edge on post-call abnormal returns (+1.66% long-short, p=0.029).** Below is the honest, layered breakdown of what does and does not survive scrutiny — from weakest to strongest claim:
 
 | # | Question | Verdict |
 |---|----------|---------|
@@ -62,7 +62,7 @@ Six layers of evidence, ranked from weakest to strongest claim:
 | 5 | Are all six GPT-4o features pulling weight? | **No** — `evasion` alone accounts for ~72% of the LLM block's contribution; the other five net to zero |
 | 6 | Is the 2025 ΔSharpe = +1.07 the same evidence as the cross-sectional edge? | **No** — it is concentrated in a handful of extreme-`p` events; per-year ranking is actually *stronger in 2024* |
 
-**Bottom line.** A weak-positive but underpowered finding, written up with explicit limitations rather than overstated significance. The robust scientific claim is *"management evasiveness on Q&A (a single GPT-4o signal) carries a real, statistically significant cross-sectional edge on post-call abnormal returns at the +2 to +21 day horizon"* — not *"six LLM signals add Sharpe."*
+**Bottom line.** The robust scientific claim is that *management evasiveness on Q&A — a single GPT-4o signal — carries a real, statistically significant cross-sectional edge on post-call abnormal returns (+2 to +21 day horizon)* — not *"six LLM signals add Sharpe."* The portfolio-level Sharpe gaps agree in sign but are underpowered at only two out-of-sample years; the result is reported with explicit limitations rather than overstated.
 
 ---
 
