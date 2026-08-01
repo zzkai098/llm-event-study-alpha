@@ -21,9 +21,27 @@ Each of ~1,500 calls is scored by a **single GPT-4o call over RAG-retrieved evid
 2. **Chunk** — 200-word sliding windows (50-word overlap); every chunk keeps a stable `chunk_id` for citation.
 3. **Embed** — OpenAI `text-embedding-3-large` (3072-d), cached per call.
 4. **Retrieve** — numpy cosine similarity, top-5 chunks, under a strict **`before_date <` anti-leakage filter** (searches the current call + all *prior* quarters, never the future).
-5. **Extract** — one structured-JSON call (`response_format={"type":"json_object"}`) returns 6 management-language signals — sentiment, confidence, certainty, **evasion**, guidance change, tone-vs-prior-quarter — each with an `evidence` field.
+5. **Extract** — one structured-JSON call (`response_format={"type":"json_object"}`) returns the six management-language signals below, each with an `evidence` field.
+
+| Signal | Type | Captures |
+|---|---|---|
+| `sentiment` | bullish / neutral / bearish | overall tone of management's commentary |
+| `confidence` | float 0–1 | the model's own confidence in its read |
+| `certainty` | int 1–10 | how definitive management sounds ("we *will*" vs "we *expect*") |
+| `evasion` | int 1–10 | how much management dodges direct questions (higher = more evasive) |
+| `guidance_change` | raise / maintain / lower / none | direction of forward guidance vs the prior quarter |
+| `tone_vs_prior_quarter` | more_cautious / similar / more_confident | shift in tone vs the previous call |
+
+Plus an `evidence` field — ≥2 verbatim `{chunk_id, quote}` pairs backing the read.
 
 **Hallucination control.** The system prompt enforces *"answer only from the provided excerpts; output `null` if unsupported; cite the `chunk_id` of every quote."* Each signal must be backed by **≥2 verbatim quotes with source chunk IDs**, so every extracted value is auditable back to the transcript and the model abstains rather than invents when evidence is absent.
+
+```text
+System: You are an equity analyst evaluating an earnings call.
+Answer ONLY using the provided excerpts. If the excerpts do not support a
+field, output `null` or 'none'. Cite the chunk_id of every quote you use.
+Output a single JSON object — no prose, no markdown fences.
+```
 
 ![signal correlations with post-earnings return](assets/signal_correlations.png)
 
