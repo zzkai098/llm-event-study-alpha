@@ -9,6 +9,24 @@ Combines **GPT-4o + RAG** with classical event-study econometrics and tree-based
 
 ---
 
+## RAG Agent Design
+
+![pipeline](assets/pipeline.png)
+
+*End-to-end: earnings-call transcripts → RAG-retrieved evidence → GPT-4o structured signals → market-model CAR labels → portfolio backtest.*
+
+Each of ~1,500 calls is scored by a **single GPT-4o call over RAG-retrieved evidence**:
+
+1. **Parse** — split each transcript into prepared remarks and Q&A pairs (operator filler dropped).
+2. **Chunk** — 200-word sliding windows (50-word overlap); every chunk keeps a stable `chunk_id` for citation.
+3. **Embed** — OpenAI `text-embedding-3-large` (3072-d), cached per call.
+4. **Retrieve** — numpy cosine similarity, top-5 chunks, under a strict **`before_date <` anti-leakage filter** (searches the current call + all *prior* quarters, never the future).
+5. **Extract** — one structured-JSON call (`response_format={"type":"json_object"}`) returns 6 management-language signals — sentiment, confidence, certainty, **evasion**, guidance change, tone-vs-prior-quarter — each with an `evidence` field.
+
+**Hallucination control.** The system prompt enforces *"answer only from the provided excerpts; output `null` if unsupported; cite the `chunk_id` of every quote."* Each signal must be backed by **≥2 verbatim quotes with source chunk IDs**, so every extracted value is auditable back to the transcript and the model abstains rather than invents when evidence is absent.
+
+---
+
 ## TL;DR — what the data actually shows
 
 Six layers of evidence, ranked from weakest to strongest claim:
@@ -42,6 +60,10 @@ Two regime takeaways:
 - **2024 bull market.** Passive equal-weight is a wall (Sharpe 2.07). Active arms cannot out-pick a market where everything goes up — selectivity is a tax. ΔSharpe (ES − Tech) = +0.13: small, sign-consistent.
 - **2025 volatile market.** Tech-only goes negative; Event-Study delivers Sharpe 0.95 ≈ BuyHold's 0.86 **at one-quarter the drawdown** (−3.9% vs −17.1%). ΔSharpe = +1.07. This is the headline, but it is also the most fragile number in the report — see §8 and the per-year diagnostics below.
 
+![cumulative returns](assets/returns.png)
+
+*Cumulative out-of-sample returns. In the volatile 2025 regime the Event-Study (LLM+Tech) arm holds up where Tech-only turns negative — at roughly one-quarter the drawdown.*
+
 ---
 
 ## Why the daily-Sharpe story is *underpowered*, not absent (NB05 §8)
@@ -65,6 +87,10 @@ Switching the unit of analysis from **days (~500)** to **events (~360)** and the
 
 This is the **first defensibly significant result** in the project. The signal generalises *beyond* the trained horizon, ruling out training-window memorisation.
 
+![OOS Sharpe and event-level CAR](assets/sharpe_car.png)
+
+*Left: out-of-sample Sharpe, Tech-only vs LLM+Tech. Right: the event-level test — sorting post-call CAR(+2,+21) by the model's score puts the top bucket at +1.43% and the bottom at −0.22% (long−short **+1.66 pp**, Mann–Whitney p = 0.029; Spearman ρ = +0.091, p = 0.042).*
+
 Per-year, the ranking story flips the daily-PnL story:
 
 | | §6 ΔSharpe | §9 Spearman ρ | §9 long−short |
@@ -86,6 +112,10 @@ Two independent attribution methods agree on the ranking:
 
 - **Impurity importance is misleading** — it favours continuous high-cardinality features (Tech floats) and structurally underweights bounded-integer LLM signals.
 - **Permutation** (shuffle features at predict time) and **refit-without** (retrain after removing the block) are different counterfactuals but agree: LLM is the second-largest driver, on par with Tech in OOS contribution.
+
+![permutation importance and drop-one LLM ablation](assets/attribution.png)
+
+*Left: permutation importance by feature block — the LLM block contributes 36.6% of out-of-sample signal, on par with the price/technical block. Right: drop-one-LLM ablation — removing **evasion** alone drops AUC the most (~72% of the whole LLM block's contribution); the other five signals net to zero.*
 
 ## Which LLM features are actually pulling weight? (NB05 §11.2)
 
