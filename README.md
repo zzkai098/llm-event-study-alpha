@@ -25,6 +25,10 @@ Each of ~1,500 calls is scored by a **single GPT-4o call over RAG-retrieved evid
 
 **Hallucination control.** The system prompt enforces *"answer only from the provided excerpts; output `null` if unsupported; cite the `chunk_id` of every quote."* Each signal must be backed by **≥2 verbatim quotes with source chunk IDs**, so every extracted value is auditable back to the transcript and the model abstains rather than invents when evidence is absent.
 
+![signal correlations with post-earnings return](assets/signal_correlations.png)
+
+*Do the extracted signals mean anything? Raw correlation of each of the 6 signals with 10-day post-earnings excess return (train). Sentiment, guidance and tone lead; **`evasion` is the lone negative** — more evasive Q&A precedes weaker drift — foreshadowing the ablation result that evasion carries most of the LLM block's signal.*
+
 ---
 
 ## TL;DR — what the data actually shows
